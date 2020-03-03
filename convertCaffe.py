@@ -92,7 +92,8 @@ def convertToCaffe(graph, prototxt_save_path, caffe_model_save_path):
 
 def getGraph(onnx_path):
     model = onnx.load(onnx_path)
-    model = shape_inference.infer_shapes(model)
+    # comment this line if error occurs
+    # model = shape_inference.infer_shapes(model)
     model_graph = model.graph
     graph = Graph.from_onnx(model_graph)
     graph = graph.transformed(transformers)
