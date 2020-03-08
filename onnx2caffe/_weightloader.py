@@ -32,6 +32,9 @@ def _convert_conv(net, node, graph, err):
 def _convert_relu(net, node, graph, err):
     pass
 
+def _convert_tanh(net, node, graph, err):
+    pass
+
 def _convert_sigmoid(net, node, graph, err):
     pass
 
@@ -101,6 +104,9 @@ def _convert_upsample(net, node, graph, err):
 def _convert_concat(net, node, graph, err):
     pass
 
+def _convert_slice(net, node, graph, err):
+    pass
+
 def _convert_conv_transpose(net, node, graph, err):
     weight_name = node.inputs[1]
     input_name = str(node.inputs[0])
@@ -127,6 +133,7 @@ def _convert_conv_transpose(net, node, graph, err):
 _ONNX_NODE_REGISTRY = {
     "Conv": _convert_conv,
     "Relu": _convert_relu,
+    "Tanh": _convert_tanh,
     "BatchNormalization": _convert_BatchNorm,
     "Add": _convert_Add,
     "Mul": _convert_Mul,
@@ -137,6 +144,7 @@ _ONNX_NODE_REGISTRY = {
     "Gemm": _convert_gemm,
     "Upsample": _convert_upsample,
     "Concat": _convert_concat,
+    "Slice": _convert_slice,
     "ConvTranspose": _convert_conv_transpose,
     "Sigmoid": _convert_sigmoid,
     "Flatten": _convert_Flatten,

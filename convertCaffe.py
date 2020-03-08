@@ -1,8 +1,10 @@
 from __future__ import print_function
+import torch
+import torch.nn
 import sys
-import caffe
 import onnx
 import numpy as np
+import caffe
 from caffe.proto import caffe_pb2
 caffe.set_mode_cpu()
 from onnx2caffe._transformers import ConvAddFuser,ConstantsToInitializers
@@ -33,9 +35,10 @@ def convertToCaffe(graph, prototxt_save_path, caffe_model_save_path):
         exist_edges.append(i[0])
         graph.channel_dims[edge_name] = graph.shape_dict[edge_name][1]
 
-
+    slice_layers = []
     for id, node in enumerate(graph.nodes):
         node_name = node.name
+        print('node name: ', node_name)
         op_type = node.op_type
         inputs = node.inputs
         inputs_tensor = node.input_tensors
@@ -53,6 +56,28 @@ def convertToCaffe(graph, prototxt_save_path, caffe_model_save_path):
             continue
         converter_fn = cvt._ONNX_NODE_REGISTRY[op_type]
         layer = converter_fn(node,graph,err)
+
+        # merge slice
+        if op_type == 'Slice' \
+                and (len(slice_layers) == 0 or (slice_layers[0].inputs)[0] == layer.inputs[0]) \
+                and graph.nodes[id+1].op_type == 'Slice' and id != len(graph.nodes)-1:
+            slice_layers.append(layer)
+            continue
+        elif op_type == 'Slice':
+            slice_layers.append(layer)
+            slice_points = []
+            slice_outputs = []
+            name = ''
+            for slice_layer in slice_layers:
+                name += slice_layer.layer_name + '-'
+                slice_points.append(slice_layer.params['slice_point'] + (0 if len(slice_points) == 0 else slice_points[-1]))
+                slice_outputs.extend(slice_layer.outputs)
+            layer = slice_layers[0]
+            layer.layer_name = name[:-1]
+            layer.params['slice_point'] = slice_points[:-1]
+            layer.outputs = slice_outputs
+            node.outputs = slice_outputs
+
         if type(layer)==tuple:
             for l in layer:
                 layers.append(l)
@@ -61,7 +86,6 @@ def convertToCaffe(graph, prototxt_save_path, caffe_model_save_path):
         outs = node.outputs
         for out in outs:
             exist_edges.append(out)
-
     net = caffe_pb2.NetParameter()
     for id,layer in enumerate(layers):
         layers[id] = layer._to_proto()

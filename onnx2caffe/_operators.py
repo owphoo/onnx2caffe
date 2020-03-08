@@ -76,6 +76,22 @@ def _convert_relu(node,graph,err):
 
     return layer
 
+def _convert_tanh(node,graph,err):
+    input_name = str(node.inputs[0])
+    output_name = str(node.outputs[0])
+    name = str(node.name)
+
+    if input_name==output_name:
+        inplace = True
+    else:
+        inplace = False
+
+    layer = myf("TanH",name,[input_name],[output_name],in_place=inplace)
+
+    graph.channel_dims[output_name] = graph.channel_dims[input_name]
+
+    return layer
+
 def _convert_sigmoid(node,graph,err):
     input_name = str(node.inputs[0])
     output_name = str(node.outputs[0])
@@ -317,7 +333,7 @@ def _convert_concat(node,graph,err):
     input_name_list = [str(i) for i in node.inputs]
     output_name = str(node.outputs[0])
     axis = node.attrs.get("axis", 1)
-
+    
     layer = myf('Concat', node_name, input_name_list, [output_name], axis = axis)
     if axis == 1:
         dim = 0
@@ -326,7 +342,23 @@ def _convert_concat(node,graph,err):
         graph.channel_dims[output_name] = dim
     else:
         graph.channel_dims[output_name] = graph.channel_dims[input_name_list[0]]
+    return layer
 
+def _convert_slice(node,graph,err):
+    node_name = node.name
+    input_name = str(node.inputs[0])
+    output_name_list = [str(i) for i in node.outputs]
+    axis = node.attrs.get("axis", 1)
+    start = node.attrs.get("starts", 1)[0]
+    end = node.attrs.get("ends", 1)[0]
+    layer = myf('Slice', node_name, [input_name], output_name_list, axis = axis, slice_point = end - start)
+    # print(graph.channel_dims[input_name], axis, start-1, end)
+    if axis == 1:
+        for name in output_name_list:
+            graph.channel_dims[name] = end - start
+    else:
+        for name in output_name_list:
+            graph.channel_dims[name] = graph.channel_dims[input_name]
     return layer
 
 def _convert_conv_transpose(node,graph,err):
@@ -384,6 +416,7 @@ def _convert_conv_transpose(node,graph,err):
 _ONNX_NODE_REGISTRY = {
     "Conv": _convert_conv,
     "Relu": _convert_relu,
+    "Tanh": _convert_tanh,
     "BatchNormalization": _convert_BatchNorm,
     "Add": _convert_Add,
     "Mul": _convert_Mul,
@@ -394,6 +427,7 @@ _ONNX_NODE_REGISTRY = {
     "Gemm": _convert_gemm,
     "Upsample": _convert_upsample,
     "Concat": _convert_concat,
+    "Slice": _convert_slice,
     "ConvTranspose": _convert_conv_transpose,
     "Sigmoid": _convert_sigmoid,
     "Flatten": _convert_Flatten,
