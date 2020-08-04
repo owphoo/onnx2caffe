@@ -18,6 +18,10 @@ python setup.py install
 run test.py to make sure it has been installed correctly  
 To convert onnx model to caffe:
 ```
+git clone https://github.com/owphoo/onnx2caffe.git --depth 1
+
+# test 
+bash ./download_sample_model.sh
 python convertCaffe.py ./model/MobileNetV2.onnx ./model/MobileNetV2.prototxt ./model/MobileNetV2.caffemodel
 ```
 ### Current support operation
@@ -37,8 +41,3 @@ python convertCaffe.py ./model/MobileNetV2.onnx ./model/MobileNetV2.prototxt ./m
 * Concat
 * Flatten
 * Slice
-
-### TODO List
- - [ ] support all onnx operations (which is impossible)
- - [ ] merge batchnormization to convolution
- - [ ] merge scale to convolution
