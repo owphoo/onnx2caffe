@@ -4,6 +4,10 @@ only use for inference
 
 ### Dependencies
 * caffe (with python support)
+```
+gpu: conda install -c defaults caffe-gpu
+cpu: conda install -c defaults caffe
+```
 * pytorch 0.4 (optional if you only want to convert onnx)
 * onnx  
 
