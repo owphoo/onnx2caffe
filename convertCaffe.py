@@ -1,6 +1,4 @@
 from __future__ import print_function
-import torch
-import torch.nn
 import sys
 import onnx
 import numpy as np
